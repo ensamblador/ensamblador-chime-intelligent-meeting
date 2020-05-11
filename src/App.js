@@ -1,24 +1,20 @@
 import React from 'react';
-import logo from './logo.svg';
 import './App.css';
+import Meeting from './components/Meeting';
+
+
+const BASE_URL = 'https://msrnkq2wj7.execute-api.us-east-1.amazonaws.com/Prod'
+
+const endpoint = {
+  join: BASE_URL + '/join'
+}
+
+
 
 function App() {
   return (
     <div className="App">
-      <header className="App-header">
-        <img src={logo} className="App-logo" alt="logo" />
-        <p>
-          Edit <code>src/App.js</code> and save to reload.
-        </p>
-        <a
-          className="App-link"
-          href="https://reactjs.org"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          Learn React
-        </a>
-      </header>
+      <Meeting endpoint = {endpoint}/>
     </div>
   );
 }
