@@ -2,9 +2,12 @@ import {
     ConsoleLogger,
     MeetingSessionPOSTLogger,
     LogLevel,
+    
+    MeetingSessionStatusCode,
     MeetingSessionConfiguration,
     DefaultMeetingSession,
     DefaultDeviceController,
+    DefaultRealtimeController,
     DefaultActiveSpeakerPolicy
 } from 'amazon-chime-sdk-js'
 
@@ -22,6 +25,41 @@ import {
     toggleButton,
     displayButtonStates
 } from './utils'
+
+import MicRecorder from './RecorderClass'
+
+
+class DemoTileOrganizer {
+    constructor() {
+        this.MAX_TILES = 16
+        this.tiles = {}
+        this.tileStates = {}
+    }
+    acquireTileIndex = (tileId) => {
+        for (let index = 0; index < this.MAX_TILES; index++) {
+            if (this.tiles[index] === tileId) {
+                return index;
+            }
+        }
+        for (let index = 0; index < this.MAX_TILES; index++) {
+            if (!(index in this.tiles)) {
+                this.tiles[index] = tileId;
+                return index;
+            }
+        }
+        throw new Error('no tiles are available');
+    }
+
+    releaseTileIndex = (tileId) => {
+        for (let index = 0; index < this.MAX_TILES; index++) {
+            if (this.tiles[index] === tileId) {
+                delete this.tiles[index];
+                return index;
+            }
+        }
+        return this.MAX_TILES;
+    }
+}
 
 
 export default class MeetingClass {
@@ -44,6 +82,9 @@ export default class MeetingClass {
         this.microphoneDeviceIds = []
         this.enableWebAudio = false
         this.enableUnifiedPlanForChromiumBasedBrowsers = true
+        this.analyserNodeCallback = () => { }
+        this.tileOrganizer = new DemoTileOrganizer();
+        this.recorder = new MicRecorder()
     }
 
     log = (str) => { console.log(`[DEMO] ${str}`) }
@@ -70,7 +111,26 @@ export default class MeetingClass {
 
         const json = await response.json()
         if (json.error) { throw new Error(`Server error: ${json.error}`) }
+        this.meeting = meeting
+        this.name = name
+        this.region = region
         return json
+    }
+
+    endMeeting = async () => {
+        await fetch(this.endpoint.end + "?title=" + this.meeting, { method: 'POST', headers: new Headers(), mode: "cors" })
+    }
+
+    leave = () => {
+        this.meetingSession.screenShare
+            .stop()
+            .catch(() => { })
+            .finally(() => {
+                return this.meetingSession.screenShare.close();
+            });
+        this.meetingSession.screenShareView.close();
+        this.audioVideo.stop();
+        this.roster = {};
     }
 
     authenticate = async (meeting, name, region) => {
@@ -81,9 +141,9 @@ export default class MeetingClass {
     initializeMeetingSession = async () => {
         let logger
         if (window.location.hostname === "localhost" || window.location.hostname === "127.0.0.1")
-            logger = new ConsoleLogger("SDK", LogLevel.INFO)
+            logger = new ConsoleLogger("SDK", LogLevel.ERROR)
         else
-            logger = new MeetingSessionPOSTLogger("SDK", this.configuration, 85, 1150, 'logs', LogLevel.INFO)
+            logger = new MeetingSessionPOSTLogger("SDK", this.configuration, 85, 1150, 'logs', LogLevel.ERROR)
 
         this.deviceController = new DefaultDeviceController(logger)
         this.configuration.enableWebAudio = this.enableWebAudio
@@ -112,6 +172,7 @@ export default class MeetingClass {
         await this.openAudioInputFromSelection()
         await this.openVideoInputFromSelection(document.getElementById('video-input').value, true)
         await this.openAudioOutputFromSelection()
+        this.startAudioPreview()
 
     }
 
@@ -139,13 +200,11 @@ export default class MeetingClass {
             }
         )
         populateInMeetingDeviceList('dropdown-menu-speaker', 'Speaker', await this.audioVideo.listAudioOutputDevices(), [],
-        async (name) => { await this.audioVideo.chooseAudioOutputDevice(name)})
+            async (name) => { await this.audioVideo.chooseAudioOutputDevice(name) })
 
         const cameras = await this.audioVideo.listVideoInputDevices()
         this.cameraDeviceIds = cameras.map(deviceInfo => { return deviceInfo.deviceId })
     }
-
-
 
     setupMuteHandler = () => {
         const handler = (isMuted) => { this.log(`muted = ${isMuted}`) }
@@ -187,7 +246,7 @@ export default class MeetingClass {
             this.log(`${attendeeId} present = ${present}`)
             if (!present) {
                 delete this.roster[attendeeId]
-                updateRoster()
+                updateRoster(this.roster)
                 return
             }
             this.audioVideo.realtimeSubscribeToVolumeIndicator(attendeeId,
@@ -211,7 +270,7 @@ export default class MeetingClass {
                         this.roster[attendeeId].signalStrength = Math.round(signalStrength * 100)
                     }
                     this.roster[attendeeId].name = externalUserId.split('#')[1]
-                    updateRoster()
+                    updateRoster(this.roster)
                 }
             )
         }
@@ -235,7 +294,7 @@ export default class MeetingClass {
                         this.roster[attendeeId].score = scores[attendeeId]
                     }
                 }
-                updateRoster()
+                updateRoster(this.roster)
             },
             this.showActiveSpeakerScores ? 100 : 0
         )
@@ -255,7 +314,12 @@ export default class MeetingClass {
     }
 
     openAudioInputFromSelection = async () => {
-        const audioInputElem = document.getElementById('audio-input')
+        let audioInputElem = null
+        if (document.getElementById('audio-input') !== null)
+            audioInputElem = document.getElementById('audio-input')
+        if (document.getElementById('dropdown-menu-microphone') !== null)
+            audioInputElem = document.getElementById('dropdown-menu-microphone')
+
         await this.audioVideo.chooseAudioInputDevice(
             this.audioInputSelectionToDevice(audioInputElem.value)
         )
@@ -281,7 +345,7 @@ export default class MeetingClass {
         }
         const data = new Uint8Array(analyserNode.fftSize)
         let frameIndex = 0
-        const analyserNodeCallback = () => {
+        this.analyserNodeCallback = () => {
             if (frameIndex === 0) {
                 analyserNode.getByteTimeDomainData(data)
                 const lowest = 0.01
@@ -294,9 +358,9 @@ export default class MeetingClass {
                 setAudioPreviewPercent(percent)
             }
             frameIndex = (frameIndex + 1) % 2
-            requestAnimationFrame(analyserNodeCallback)
+            requestAnimationFrame(this.analyserNodeCallback)
         }
-        requestAnimationFrame(analyserNodeCallback)
+        requestAnimationFrame(this.analyserNodeCallback)
     }
 
     openVideoInputFromSelection = async (selection, showPreview) => {
@@ -333,12 +397,19 @@ export default class MeetingClass {
     }
 
     openAudioOutputFromSelection = async () => {
-        const audioOutput = document.getElementById('audio-output')
+        let audioOutput = null
+
+        if (document.getElementById('audio-output') !== null)
+            audioOutput = document.getElementById('audio-output')
+        if (document.getElementById('dropdown-menu-speaker') !== null)
+            audioOutput = document.getElementById('dropdown-menu-speaker')
         await this.audioVideo.chooseAudioOutputDevice(audioOutput.value)
+
+        if (document.getElementById('meeting-audio') !== null)
+            await this.audioVideo.bindAudioElement(document.getElementById('meeting-audio'));
     }
-    join = async () => {
-        window.addEventListener('unhandledrejection', (event) => { this.log(event.reason) })
-        await this.populateAllMeetingDeviceLists()
+
+    startJoining = async () => {
         await this.openAudioInputFromSelection()
         await this.openAudioOutputFromSelection()
         this.audioVideo.start()
@@ -346,8 +417,16 @@ export default class MeetingClass {
         await this.meetingSession.screenShareView.open()
         this.audioVideo.stopVideoPreviewForVideoInput(document.getElementById('video-preview'))
         this.audioVideo.chooseVideoInputDevice(null)
-        this.audioVideo.startVideoPreviewForVideoInput(document.getElementById('video-preview'))
+    }
+
+    finishJoin = async () => {
+        window.addEventListener('unhandledrejection', (event) => { this.log(event.reason) })
+        await this.populateAllMeetingDeviceLists()
+        await this.openAudioOutputFromSelection()
         displayButtonStates()
+
+        await this.recorder.init()
+        this.recorder.start(2000)
 
     }
 
@@ -359,12 +438,12 @@ export default class MeetingClass {
     buttonCameraClick = async (e) => {
         if (toggleButton(this.buttonStates, 'button-camera') && this.canStartLocalVideo) {
             try {
-                const videoInput = document.getElementById('video-input')
-                let camera = videoInput.value
-                if (videoInput.value === 'None') {
+                let camera = this.selectedVideoInput
+                if (this.selectedVideoInput === 'None') {
                     camera = this.cameraDeviceIds.length ? this.cameraDeviceIds[0] : 'None'
                 }
                 await this.openVideoInputFromSelection(camera, false)
+
                 this.audioVideo.startLocalVideoTile()
             } catch (err) {
                 this.log('no video input device selected')
@@ -414,6 +493,82 @@ export default class MeetingClass {
         }
     }
 
+    buttonPauseScreenShareClick = async () => {
+        const button = 'button-pause-screen-share';
+        if (this.buttonStates[button]) {
+            this.meetingSession.screenShare.unpause().then(() => {
+                this.buttonStates[button] = false;
+                displayButtonStates(this.buttonStates);
+            });
+        } else {
+            const self = this;
+            const observer = {
+                didUnpauseScreenSharing() {
+                    self.buttonStates[button] = false;
+                    displayButtonStates(self.buttonStates);
+                },
+            };
+            this.meetingSession.screenShare.registerObserver(observer);
+            this.meetingSession.screenShare
+                .pause()
+                .then(() => {
+                    this.buttonStates[button] = true;
+                    displayButtonStates(this.buttonStates);
+                })
+                .catch(error => {
+                    this.log(error);
+                });
+        }
+    }
+
+    buttonSpeakerClick = async () => {
+        if (toggleButton(this.buttonStates, 'button-speaker')) {
+            this.audioVideo.bindAudioElement(document.getElementById('meeting-audio'))
+        } else {
+            this.audioVideo.unbindAudioElement();
+        }
+    }
+
+    buttonScreenViewClick = async () => {
+        if (toggleButton(this.buttonStates, 'button-screen-view')) {
+            const screenViewDiv = document.getElementById('tile-17')
+            screenViewDiv.style.display = 'block';
+            this.meetingSession.screenShareView.start(screenViewDiv);
+        } else {
+            this.meetingSession.screenShareView
+                .stop()
+                .catch(error => {
+                    this.log(error);
+                })
+                .finally(() => hideTile(17, this.layoutVideoTiles));
+        }
+        this.layoutVideoTiles();
+    }
+
+    buttonMeetingEndClick = async (e) => {
+        const confirmEnd = new URL(window.location.href).searchParams.get('confirm-end') === 'true';
+        const prompt =
+            'Are you sure you want to end the meeting for everyone? The meeting cannot be used after ending it.';
+        if (confirmEnd && !window.confirm(prompt)) {
+            return;
+        }
+        e.target.disabled = true;
+        await this.endMeeting();
+        this.leave();
+        e.target.disabled = false;
+        // @ts-ignore
+        window.location = window.location.pathname;
+
+    }
+
+    buttonMeetingLeaveClick = async (e) => {
+        e.target.disabled = true;
+        this.leave();
+        e.target.disabled = false;
+        // @ts-ignore
+        window.location = window.location.pathname;
+    }
+
     audioInputChange = async () => {
         this.log('audio input device is changed');
         await this.openAudioInputFromSelection();
@@ -455,31 +610,172 @@ export default class MeetingClass {
         await this.openAudioOutputFromSelection();
     }
 
-    audioInputsChanged = (_freshAudioInputDeviceList) => {
-        this.populateAudioInputList();
+    audioInputsChanged = async (_freshAudioInputDeviceList) => {
+        if (document.getElementById('audio-input') !== null)
+            populateDeviceList('audio-input', 'Microphone', await this.audioVideo.listAudioInputDevices(), ['None', '440 Hz'])
+
+        if (document.getElementById('dropdown-menu-microphone') !== null)
+            populateInMeetingDeviceList('dropdown-menu-microphone', 'Microphone', await this.audioVideo.listAudioInputDevices(), ['None', '440 Hz'],
+                async (name) => { await this.audioVideo.chooseAudioInputDevice(this.audioInputSelectionToDevice(name)) })
+
     }
 
-    videoInputsChanged = (_freshVideoInputDeviceList) => {
-        this.populateVideoInputList()
+    videoInputsChanged = async (_freshVideoInputDeviceList) => {
+        if (document.getElementById('video-input') !== null)
+            populateDeviceList('video-input', 'Camera', await this.audioVideo.listVideoInputDevices(), ['None', 'Blue', 'SMPTE Color Bars'])
+
+        if (document.getElementById('dropdown-menu-camera') !== null)
+            populateInMeetingDeviceList('dropdown-menu-camera', 'Camera',
+                await this.audioVideo.listVideoInputDevices(),
+                ['None', 'Blue', 'SMPTE Color Bars'],
+                async (name) => {
+                    try {
+                        await this.openVideoInputFromSelection(name, false);
+                    } catch (err) {
+                        this.log('no video input device selected');
+                    }
+                }
+            )
+        const cameras = await this.audioVideo.listVideoInputDevices()
+        this.cameraDeviceIds = cameras.map(deviceInfo => { return deviceInfo.deviceId })
     }
 
-    audioOutputsChanged = (_freshAudioOutputDeviceList) => {
-        this.populateAudioOutputList();
+    audioOutputsChanged = async (_freshAudioOutputDeviceList) => {
+        if (document.getElementById('audio-output') !== null)
+            populateDeviceList('audio-output', 'Speaker', await this.audioVideo.listAudioOutputDevices(), [])
+
+        if (document.getElementById('dropdown-menu-speaker') !== null)
+            populateInMeetingDeviceList('dropdown-menu-speaker', 'Speaker', await this.audioVideo.listAudioOutputDevices(), [],
+                async (name) => { await this.audioVideo.chooseAudioOutputDevice(name) })
     }
 
-    populateAudioOutputList = async () => {
-        this.populateDeviceList('audio-output', 'Speaker', await this.audioVideo.listAudioOutputDevices(), [])
-        this.populateInMeetingDeviceList(
-            'dropdown-menu-speaker',
-            'Speaker',
-            await this.audioVideo.listAudioOutputDevices(),
-            [],
-            async (name) => {
-                await this.audioVideo.chooseAudioOutputDevice(name);
+    connectionDidBecomePoor = () => {
+        this.log('connection is poor');
+    }
+
+    connectionDidSuggestStopVideo = () => {
+        this.log('suggest turning the video off');
+    }
+
+    videoSendDidBecomeUnavailable = () => {
+        this.log('sending video is not available');
+    }
+
+    estimatedDownlinkBandwidthLessThanRequired = (estimatedDownlinkBandwidthKbps, requiredVideoDownlinkBandwidthKbps) => {
+        this.log(`Estimated downlink bandwidth is ${estimatedDownlinkBandwidthKbps} is less than required bandwidth for video ${requiredVideoDownlinkBandwidthKbps}`)
+    }
+
+    videoNotReceivingEnoughData = (videoReceivingReports) => {
+        this.log(`One or more video streams are not receiving expected amounts of data ${JSON.stringify(videoReceivingReports)}`
+        )
+    }
+
+    metricsDidReceive = (clientMetricReport) => {
+        const metricReport = clientMetricReport.getObservableMetrics();
+        if (
+            typeof metricReport.availableSendBandwidth === 'number' &&
+            !isNaN(metricReport.availableSendBandwidth)
+        ) {
+            document.getElementById('video-uplink-bandwidth').innerHTML =
+                'Available Uplink Bandwidth: ' +
+                String(metricReport.availableSendBandwidth / 1000) +
+                ' Kbps';
+        } else if (
+            typeof metricReport.availableOutgoingBitrate === 'number' &&
+            !isNaN(metricReport.availableOutgoingBitrate)
+        ) {
+            document.getElementById('video-uplink-bandwidth').innerHTML =
+                'Available Uplink Bandwidth: ' +
+                String(metricReport.availableOutgoingBitrate / 1000) +
+                ' Kbps';
+        } else {
+            document.getElementById('video-uplink-bandwidth').innerHTML =
+                'Available Uplink Bandwidth: Unknown';
+        }
+
+        if (
+            typeof metricReport.availableReceiveBandwidth === 'number' &&
+            !isNaN(metricReport.availableReceiveBandwidth)
+        ) {
+            document.getElementById('video-downlink-bandwidth').innerHTML =
+                'Available Downlink Bandwidth: ' +
+                String(metricReport.availableReceiveBandwidth / 1000) +
+                ' Kbps';
+        } else if (
+            typeof metricReport.availableIncomingBitrate === 'number' &&
+            !isNaN(metricReport.availableIncomingBitrate)
+        ) {
+            document.getElementById('video-downlink-bandwidth').innerHTML =
+                'Available Downlink Bandwidth: ' +
+                String(metricReport.availableIncomingBitrate / 1000) +
+                ' Kbps';
+        } else {
+            document.getElementById('video-downlink-bandwidth').innerHTML =
+                'Available Downlink Bandwidth: Unknown';
+        }
+    }
+
+    audioVideoDidStartConnecting = (reconnecting) => {
+        this.log(`session connecting. reconnecting: ${reconnecting}`)
+    }
+
+    audioVideoDidStart = () => {
+        this.log('session started')
+    }
+
+    audioVideoDidStop = (sessionStatus) => {
+        this.log(`session stopped from ${JSON.stringify(sessionStatus)}`);
+        if (sessionStatus.statusCode() === MeetingSessionStatusCode.AudioCallEnded) {
+            this.log(`meeting ended`);
+            // @ts-ignore
+            window.location = window.location.pathname;
+        }
+    }
+
+    videoTileDidUpdate = (tileState) => {
+
+        //this.log(`video tile updated: ${JSON.stringify(tileState, null, '  ')}`);
+        if (!tileState.boundAttendeeId) { return }
+        const tileIndex = tileState.localTile ? 16 : this.tileOrganizer.acquireTileIndex(tileState.tileId);
+        const tileElement = document.getElementById(`tile-${tileIndex}`)
+        const videoElement = document.getElementById(`video-${tileIndex}`)
+        const nameplateElement = document.getElementById(`nameplate-${tileIndex}`)
+
+        const pauseButtonElement = document.getElementById(`video-pause-${tileIndex}`)
+        const resumeButtonElement = document.getElementById(`video-resume-${tileIndex}`)
+
+        pauseButtonElement.addEventListener('click', () => {
+            if (!tileState.paused) {
+                this.audioVideo.pauseVideoTile(tileState.tileId);
             }
-        );
+        });
+
+        resumeButtonElement.addEventListener('click', () => {
+            if (tileState.paused) {
+                this.audioVideo.unpauseVideoTile(tileState.tileId);
+            }
+        });
+
+        this.log(`binding video tile ${tileState.tileId} to ${videoElement.id}`);
+        this.audioVideo.bindVideoElement(tileState.tileId, videoElement);
+        this.tileIndexToTileId[tileIndex] = tileState.tileId;
+        this.tileIdToTileIndex[tileState.tileId] = tileIndex;
+        const rosterName = tileState.boundExternalUserId.split('#')[1];
+        if (nameplateElement.innerHTML !== rosterName) {
+            nameplateElement.innerHTML = rosterName;
+        }
+        tileElement.style.display = 'block';
+        this.layoutVideoTiles();
     }
 
-}
+    videoTileWasRemoved = (tileId) => {
+        this.log(`video tile removed: ${tileId}`);
+        hideTile(this.tileOrganizer.releaseTileIndex(tileId), this.layoutVideoTiles);
+    }
 
+    videoAvailabilityDidChange = (availability) => {
+        this.canStartLocalVideo = availability.canStartLocalVideo;
+        this.log(`video availability changed: canStartLocalVideo  ${availability.canStartLocalVideo}`);
+    }
+}
 

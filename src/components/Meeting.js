@@ -6,8 +6,6 @@ import InMeeting from "./InMeeting.js"
 import MeetingClass from './MeetingClass'
 
 
-import '../style.scss';
-import 'bootstrap';
 
 const MC = new MeetingClass()
 
@@ -35,7 +33,7 @@ const Meeting = (props) => {
 
   const initMeeting = async () => {
     try {
-      await MC.join()
+      await MC.finishJoin()
     } catch (error) {
       document.getElementById('failed-join').innerHTML = `Meeting ID: ${meeting}`;
       document.getElementById('failed-join-error').innerHTML = `Error: ${error.message}`;
@@ -70,18 +68,11 @@ const Meeting = (props) => {
       return
     }
     setFlow("flow-devices")
-    /* await openAudioInputFromSelection()
-    try {
-      await openVideoInputFromSelection(document.getElementById('video-input').value, true)
-    } catch (err) {
-      console.log('no video input device selected');
-    }
-    await openAudioOutputFromSelection()
-    hideProgress('progress-authenticate'); */
   }
 
   const formDevicesSubmit = async (e) => {
     e.preventDefault()
+    await MC.startJoining()
     setFlow('flow-meeting');
   }
 

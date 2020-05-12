@@ -148,11 +148,11 @@ export const getActiveTileId = (roster, audioVideo) => {
     return null;
 }
 
-export const hideTile = (tileIndex, layoutVideoTiles ) => {
+export const hideTile = (tileIndex, layoutVideoTiles) => {
     const tileElement = document.getElementById(`tile-${tileIndex}`);
     tileElement.style.display = 'none';
     layoutVideoTiles();
-  }
+}
 
 const updateTilePlacement = (tileIndex, x, y, w, h) => {
     const tile = document.getElementById(`tile-${tileIndex}`)

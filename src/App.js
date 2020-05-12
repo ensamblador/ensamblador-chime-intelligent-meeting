@@ -6,7 +6,8 @@ import Meeting from './components/Meeting';
 const BASE_URL = 'https://msrnkq2wj7.execute-api.us-east-1.amazonaws.com/Prod'
 
 const endpoint = {
-  join: BASE_URL + '/join'
+  join: BASE_URL + '/join',
+  end: BASE_URL + '/end'
 }
 
 

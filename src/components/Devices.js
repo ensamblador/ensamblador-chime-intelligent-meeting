@@ -2,14 +2,14 @@ import React, { useState, useEffect } from "react";
 
 const Devices = (props) => {
 
-  const [done, setDone] =  useState(false)
+  const [done, setDone] = useState(false)
 
-  useEffect(()=>{
-    if (done===false) {
+  useEffect(() => {
+    if (done === false) {
       props.initDevices()
       setDone(true)
     }
-  },[done,props])
+  }, [done, props])
 
   return (<div id="flow-devices" className="flow">
     <div className="container">
@@ -83,7 +83,7 @@ const Devices = (props) => {
               style={{ width: "308px" }}
             ></select>
           </div>
-          <div className="col-4">
+          {/*           <div className="col-4">
             <button
               id="button-test-sound"
               className="btn btn-outline-secondary btn-block h-50"
@@ -91,7 +91,7 @@ const Devices = (props) => {
             >
               Test
             </button>
-          </div>
+          </div> */}
         </div>
         <div className="row mt-3">
           <div className="col-lg">
@@ -132,6 +132,16 @@ const Devices = (props) => {
         ></div>
       </div>
     </div>
+    <div
+      className="text-muted"
+      style={{ position: "fixed", left: "3px", bottom: "3px" }}
+      id="video-uplink-bandwidth"
+    ></div>
+    <div
+      className="text-muted"
+      style={{ position: "fixed", right: "3px", bottom: "3px" }}
+      id="video-downlink-bandwidth"
+    ></div>
   </div>)
 }
 export default Devices
