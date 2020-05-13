@@ -426,8 +426,6 @@ export default class MeetingClass {
         displayButtonStates()
 
         await this.recorder.init()
-        this.recorder.start(2000)
-
     }
 
     videoAvailabilityDidChange = (availability) => {
