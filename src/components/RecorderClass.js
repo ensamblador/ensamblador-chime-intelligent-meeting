@@ -80,9 +80,12 @@ export default class MicRecorder {
             if (results[0].Alternatives.length > 0) {
                 let transcript = results[0].Alternatives[0].Transcript
                 transcript = decodeURIComponent(escape(transcript))
-                console.log(this.transcription + transcript)
+                //console.log(this.transcription + transcript)
                 if (!results[0].IsPartial) {
                     this.transcription += transcript + "\n"
+                    console.log(this.transcription)
+                    this.logger.createComment(this.transcription)
+                    this.transcription =''
                 }
             }
         }
@@ -113,7 +116,7 @@ export default class MicRecorder {
 
             // the close event immediately follows the error event; only handle one.
             if (!this.socketError && !this.transcribeException) {
-                if (closeEvent.code != 1000) {
+                if (closeEvent.code !== 1000) {
                     console.error('Streaming Exception:' + closeEvent.reason);
                 }
             }

@@ -2,12 +2,10 @@ import {
     ConsoleLogger,
     MeetingSessionPOSTLogger,
     LogLevel,
-    
     MeetingSessionStatusCode,
     MeetingSessionConfiguration,
     DefaultMeetingSession,
     DefaultDeviceController,
-    DefaultRealtimeController,
     DefaultActiveSpeakerPolicy
 } from 'amazon-chime-sdk-js'
 
@@ -27,7 +25,7 @@ import {
 } from './utils'
 
 import MicRecorder from './RecorderClass'
-
+import Logger from './LoggerClass'
 
 class DemoTileOrganizer {
     constructor() {
@@ -85,6 +83,7 @@ export default class MeetingClass {
         this.analyserNodeCallback = () => { }
         this.tileOrganizer = new DemoTileOrganizer();
         this.recorder = new MicRecorder()
+        this.logger  = new Logger()
     }
 
     log = (str) => { console.log(`[DEMO] ${str}`) }
@@ -114,6 +113,8 @@ export default class MeetingClass {
         this.meeting = meeting
         this.name = name
         this.region = region
+
+
         return json
     }
 
@@ -136,6 +137,8 @@ export default class MeetingClass {
     authenticate = async (meeting, name, region) => {
         let joinInfo = (await this.joinMeeting(meeting, name, region)).JoinInfo
         this.configuration = new MeetingSessionConfiguration(joinInfo.Meeting, joinInfo.Attendee)
+        this.logger.joined(joinInfo.Meeting.Meeting, joinInfo.Attendee.Attendee)
+        return joinInfo.Meeting.Meeting.MeetingId
     }
 
     initializeMeetingSession = async () => {
@@ -419,13 +422,13 @@ export default class MeetingClass {
         this.audioVideo.chooseVideoInputDevice(null)
     }
 
-    finishJoin = async () => {
+    finishJoin = async (logger) => {
         window.addEventListener('unhandledrejection', (event) => { this.log(event.reason) })
         await this.populateAllMeetingDeviceLists()
         await this.openAudioOutputFromSelection()
         displayButtonStates()
-
         await this.recorder.init()
+        this.recorder.logger = this.logger
     }
 
     videoAvailabilityDidChange = (availability) => {

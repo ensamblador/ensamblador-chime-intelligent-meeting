@@ -50,7 +50,7 @@ const InMeeting = (props) => {
         <div className="row">
           <div className="col-1 text-left">
             <div id="meeting-id" className="navbar-brand text-muted m-2">
-              {props.meeting} - {props.region}
+              <p> {props.meeting} - {props.region}</p>
             </div>
           </div>
           <div className="col-5 text-right">
@@ -159,6 +159,9 @@ const InMeeting = (props) => {
             >
               Pause /unpause Screen Share
           </button>
+          </div>
+          <div id='chime-meeting-id'>
+            Meeting ID: {props.meetingId}
           </div>
           <div className="col-4 text-left">
             <div

@@ -11,7 +11,7 @@ const endpoint = {
   end: BASE_URL + '/end'
 }
 
-const recorder = new MicRecorder()
+//const recorder = new MicRecorder()
 
 
 function App() {
@@ -21,8 +21,7 @@ function App() {
   useEffect(() => {
 
     const load = async () => {
-      await recorder.init()
-      
+     // await recorder.init()
       setLoaded(true)
     }
     if (loaded === false) {
