@@ -25,6 +25,7 @@ export const createMeeting = /* GraphQL */ `
           entities
           keyPhrases
           createdAt
+          commentMeetingId
         }
         nextToken
       }
@@ -56,6 +57,7 @@ export const updateMeeting = /* GraphQL */ `
           entities
           keyPhrases
           createdAt
+          commentMeetingId
         }
         nextToken
       }
@@ -87,6 +89,7 @@ export const deleteMeeting = /* GraphQL */ `
           entities
           keyPhrases
           createdAt
+          commentMeetingId
         }
         nextToken
       }
@@ -121,6 +124,7 @@ export const createAtendee = /* GraphQL */ `
           entities
           keyPhrases
           createdAt
+          commentMeetingId
         }
         nextToken
       }
@@ -155,6 +159,7 @@ export const updateAtendee = /* GraphQL */ `
           entities
           keyPhrases
           createdAt
+          commentMeetingId
         }
         nextToken
       }
@@ -189,6 +194,7 @@ export const deleteAtendee = /* GraphQL */ `
           entities
           keyPhrases
           createdAt
+          commentMeetingId
         }
         nextToken
       }
@@ -232,6 +238,7 @@ export const createComment = /* GraphQL */ `
       entities
       keyPhrases
       createdAt
+      commentMeetingId
     }
   }
 `;
@@ -271,6 +278,7 @@ export const updateComment = /* GraphQL */ `
       entities
       keyPhrases
       createdAt
+      commentMeetingId
     }
   }
 `;
@@ -310,6 +318,7 @@ export const deleteComment = /* GraphQL */ `
       entities
       keyPhrases
       createdAt
+      commentMeetingId
     }
   }
 `;

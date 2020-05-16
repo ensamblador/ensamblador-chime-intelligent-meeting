@@ -120,6 +120,8 @@ export default class MeetingClass {
 
     endMeeting = async () => {
         await fetch(this.endpoint.end + "?title=" + this.meeting, { method: 'POST', headers: new Headers(), mode: "cors" })
+        this.logger.end()
+
     }
 
     leave = () => {
@@ -132,6 +134,7 @@ export default class MeetingClass {
         this.meetingSession.screenShareView.close();
         this.audioVideo.stop();
         this.roster = {};
+        this.logger.leave()
     }
 
     authenticate = async (meeting, name, region) => {
@@ -146,7 +149,7 @@ export default class MeetingClass {
         if (window.location.hostname === "localhost" || window.location.hostname === "127.0.0.1")
             logger = new ConsoleLogger("SDK", LogLevel.ERROR)
         else
-            logger = new MeetingSessionPOSTLogger("SDK", this.configuration, 85, 1150, 'logs', LogLevel.ERROR)
+            logger = new MeetingSessionPOSTLogger("SDK", this.configuration, 85, 1150, this.endpoint.logs, LogLevel.ERROR)
 
         this.deviceController = new DefaultDeviceController(logger)
         this.configuration.enableWebAudio = this.enableWebAudio

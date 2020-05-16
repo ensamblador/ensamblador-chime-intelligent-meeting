@@ -31,9 +31,16 @@ export default class Logger {
         this.AttendeeId = Atendee.AttendeeId
         this.createMeeting(Meeting)
         this.createAttendee(Atendee)
-        this.createComment('Join')
+        this.createComment('[Join]')
 
     }
+    leave = () => {
+        if (this.MeetingId) this.createComment('[Leave]')
+    }
+    end = () => {
+        if (this.MeetingId) this.createComment('[End]')
+    }
+
     createAttendee = (aAttendee) => {
         let chimeAtendeeId = aAttendee.ExternalUserId.split("#")[1]
         this.client.mutate({

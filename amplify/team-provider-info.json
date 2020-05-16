@@ -1,0 +1,15 @@
+{
+    "dev": {
+        "awscloudformation": {
+            "AuthRoleName": "amplify-chimeintelligentmeet-dev-221128-authRole",
+            "UnauthRoleArn": "arn:aws:iam::844626608976:role/amplify-chimeintelligentmeet-dev-221128-unauthRole",
+            "AuthRoleArn": "arn:aws:iam::844626608976:role/amplify-chimeintelligentmeet-dev-221128-authRole",
+            "Region": "us-east-1",
+            "DeploymentBucketName": "amplify-chimeintelligentmeet-dev-221128-deployment",
+            "UnauthRoleName": "amplify-chimeintelligentmeet-dev-221128-unauthRole",
+            "StackName": "amplify-chimeintelligentmeet-dev-221128",
+            "StackId": "arn:aws:cloudformation:us-east-1:844626608976:stack/amplify-chimeintelligentmeet-dev-221128/6e26b7d0-9651-11ea-bae8-0a1f71f25d05",
+            "AmplifyAppId": "d2xo7788qfqusq"
+        }
+    }
+}

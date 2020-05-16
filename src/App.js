@@ -8,7 +8,8 @@ const BASE_URL = 'https://msrnkq2wj7.execute-api.us-east-1.amazonaws.com/Prod'
 
 const endpoint = {
   join: BASE_URL + '/join',
-  end: BASE_URL + '/end'
+  end: BASE_URL + '/end',
+  logs: BASE_URL + '/logs'
 }
 
 //const recorder = new MicRecorder()
