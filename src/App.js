@@ -4,12 +4,13 @@ import Meeting from './components/Meeting';
 import MicRecorder from './components/RecorderClass'
 
 
-const BASE_URL = 'https://msrnkq2wj7.execute-api.us-east-1.amazonaws.com/Prod'
+//const BASE_URL = 'https://msrnkq2wj7.execute-api.us-east-1.amazonaws.com/Prod/'
+const CHIME_BACKEND = 'https://0qyyzzc6jd.execute-api.us-east-1.amazonaws.com/Prod/'
 
 const endpoint = {
-  join: BASE_URL + '/join',
-  end: BASE_URL + '/end',
-  logs: BASE_URL + '/logs'
+  join: CHIME_BACKEND + 'join',
+  end: CHIME_BACKEND + 'end',
+  logs: CHIME_BACKEND + 'logs'
 }
 
 //const recorder = new MicRecorder()

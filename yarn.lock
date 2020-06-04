@@ -1556,9 +1556,9 @@
   integrity sha512-rr+OQyAjxze7GgWrSaJwydHStIhHq2lvY3BOC2Mj7KnzI7XK0Uw1TOOdI9lDoajEbSWLiYgoo4f1R51erQfhPQ==
 
 "@types/dom-mediacapture-record@^1.0.4":
-  version "1.0.5"
-  resolved "https://registry.yarnpkg.com/@types/dom-mediacapture-record/-/dom-mediacapture-record-1.0.5.tgz#63abc431b95e6af31d3c2c4392e1f31fd0b753c8"
-  integrity sha512-15z4KlDUIm1AZmfCw0qK5ejIRSAvRpsr27X7ybiD+6EQlBWCF7BueYI+PPwqK/1jXaNkFQoK2gTByN0V7X+FEg==
+  version "1.0.6"
+  resolved "https://registry.yarnpkg.com/@types/dom-mediacapture-record/-/dom-mediacapture-record-1.0.6.tgz#37624219f180fc517b99a266512b6209352dd1ba"
+  integrity sha512-N7+dsk8WPIvC59xZfbtvuTxfZI0I21uBLehhbz5Kx4Da9K26IdzqNuVX3ldWAxzYLVIsXr82MK9nlsKLxmka9A==
 
 "@types/eslint-visitor-keys@^1.0.0":
   version "1.0.0"
@@ -1620,9 +1620,9 @@
   integrity sha512-3ySmiBYJPqgjiHA7oEaIo2Rzz0HrOZ7yrNO5HWyaE5q0lQ3BppDZ3N53Miz8bw2I7gh1/zir2MGVZBvpb1zq9g==
 
 "@types/node@^10.1.0":
-  version "10.17.21"
-  resolved "https://registry.yarnpkg.com/@types/node/-/node-10.17.21.tgz#c00e9603399126925806bed2d9a1e37da506965e"
-  integrity sha512-PQKsydPxYxF1DsAFWmunaxd3sOi3iMt6Zmx/tgaagHYmwJ/9cRH91hQkeJZaUGWbvn0K5HlSVEXkn5U/llWPpQ==
+  version "10.17.24"
+  resolved "https://registry.yarnpkg.com/@types/node/-/node-10.17.24.tgz#c57511e3a19c4b5e9692bb2995c40a3a52167944"
+  integrity sha512-5SCfvCxV74kzR3uWgTYiGxrd69TbT1I6+cMx1A5kEly/IVveJBimtAMlXiEyVFn5DvUFewQWxOOiJhlxeQwxgA==
 
 "@types/parse-json@^4.0.0":
   version "4.0.0"
@@ -2008,9 +2008,9 @@ alphanum-sort@^1.0.0:
   integrity sha1-l6ERlkmyEa0zaR2fn0hqjsn74KM=
 
 amazon-chime-sdk-js@^1.5.0:
-  version "1.5.0"
-  resolved "https://registry.yarnpkg.com/amazon-chime-sdk-js/-/amazon-chime-sdk-js-1.5.0.tgz#b7052e08051e2183234173e925c1070154f5e53a"
-  integrity sha512-YeDzwrfvqOH0xoZozZbjOYLdwHOycLmtlJ7KGnqP8p/2Q7DmF4P8rPfqX2fVntdgaej3sx6D9MC1tsueutyylg==
+  version "1.7.0"
+  resolved "https://registry.yarnpkg.com/amazon-chime-sdk-js/-/amazon-chime-sdk-js-1.7.0.tgz#4cd6acd9ce5019deb11f63b6a30d6ae73b8394b0"
+  integrity sha512-V8hRoocwVDFo73qk5qKo9pV026ZrwNBqRLH9GUnz3ZZIEWzS/LNnEOcJIRIvrDltcWh2XyWdTf+W6R7oRn3qaA==
   dependencies:
     "@types/dom-mediacapture-record" "^1.0.4"
     detect-browser "^4.7.0"

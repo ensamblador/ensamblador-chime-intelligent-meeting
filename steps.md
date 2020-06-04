@@ -1,0 +1,3 @@
+* Creamos un bucket para utilizarlo en el despliegue de artefactos `aws s3 mb <unique-bucket-name>` por ejemplo `aws s3 mb s3://chime-intelligent-meeting` 
+* Utilizamos sam cli para el empaquetado  `sam package --s3-bucket <bucket-created>` por ejemplo `sam package --s3-bucket chime-intelligent-meeting`
+* `sam deploy --stack-name chime-intelligent-meeting --s3-bucket chime-intelligent-meeting --capabilities CAPABILITY_IAM --region us-east-1`
